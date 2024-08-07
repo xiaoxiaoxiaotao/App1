@@ -1,5 +1,5 @@
 // Define the URL to send the request to
-const url = 'http://localhost:5000/api/test';
+const url = 'http://localhost:5000/controller';
 
 // Define the payload to be sent in the request
 const args = process.argv;
