@@ -74,7 +74,7 @@ To build the Docker images and start the containers, run the following script:
 ```
 
 This script will:
-- Create a Docker network (`my_docker_network`) if it doesn't already exist.
+- Create a Docker network (`my_docker_network`) if it doesn't already exist. Dockers will conmunicate each other through this Docker network.
 - Build Docker images for each service if they don't already exist.
 - Start containers for each service, binding them to specific ports:
   - Controller: `localhost:5000`
