@@ -7,13 +7,13 @@ This project is a Docker-based function chaining system that includes multiple c
 ```
 App1/
 │
-├── Docker-common_error_option1/
-│   ├── node_modules/               # Node.js dependencies (not included in version control)
-│   ├── api_info.json               # API configuration file
-│   ├── app.js                      # Main application logic for the controller
-│   ├── Dockerfile                  # Dockerfile for the controller
-│    ├── package.json                # Node.js package file
-│    └──package-lock.json           # Node.js lock file
+├── Controller/
+│   ├── node_modules/           # Node.js dependencies (not included in version control)
+│   ├── api_info.json           # API configuration file
+│   ├── app.js                  # Main application logic for the controller
+│   ├── Dockerfile              # Dockerfile for the controller
+│   ├── package.json            # Node.js package file
+│   └──package-lock.json        # Node.js lock file
 │
 ├── Docker-common_error_option1/
 │   ├── functions/              # Contains Go functions related to common errors
