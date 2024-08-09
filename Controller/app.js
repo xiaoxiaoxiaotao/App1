@@ -8,7 +8,7 @@ app.use(bodyParser.json());
 
 let requestLog = {};
 
-// 读取 api_info.json 文件中的 API 信息
+// read api_info.json to extract the iinformation of APIs
 let apiInfo = {};
 try {
     const data = fs.readFileSync('api_info.json', 'utf8');
@@ -17,31 +17,31 @@ try {
     console.error('Error reading api_info.json:', err);
 }
 
-// 定义 API 的输入模型
+// define input from user
 class UserInput {
     constructor(Number) {
         this.Number = Number;
     }
 }
 
-// 定义 API 的输出模型
+// define output of user
 class FunctionOutput {
     constructor(result) {
         this.result = result;
     }
 }
 
-// 格式化数据为 JSON
+// formatt the JSON to the input format of functions
 function formatData(outputResult) {
     return { root: JSON.stringify(outputResult) };
 }
 
-// 发送带有 JSON 负载的 POST 请求
+// send a request to function chain (conduct recursively)
 async function sendPostRequestJson(apiName, payload) {
     let url = null;
     let headers = {};
 
-    // 获取 API 信息
+    // find API inforation through the name of api
     for (const api of apiInfo.apis) {
         if (api.name === apiName) {
             url = api.path;
@@ -50,16 +50,16 @@ async function sendPostRequestJson(apiName, payload) {
         }
     }
 
-    // 检查 URL 是否存在
+    // check URL
     if (url === null) {
         throw new Error(`API named '${apiName}' not found.`);
     }
 
     try {
-        // 发送 POST 请求
+        // send post request
         const response = await axios.post(url, payload, { headers });
     
-        // 处理响应
+        // get response
         if (response.status === 200) {
             const successResult = response.data.result || "No result";
             const message = `Response for ${apiName} task is ${successResult}`;
@@ -71,10 +71,10 @@ async function sendPostRequestJson(apiName, payload) {
                 payload = formatData(successResult);
                 return await sendPostRequestJson(apiName, payload);
             } else {
-                return response; // 无下一个 API，返回当前响应
+                return response; // if there is not next api, this is the last function of chain, so just return this to user
             }
         } else {
-            return response; // 处理其他状态码，返回当前响应
+            return response; // this has not conducted by the app yet
         }
     } catch (error) {
         if (error.response && error.response.status === 400) {
@@ -87,23 +87,23 @@ async function sendPostRequestJson(apiName, payload) {
                 payload = formatData(requestLog);
                 return await sendPostRequestJson(apiName, payload);
             } else {
-                return error.response; // 无错误处理器，返回当前响应
+                return error.response; // no error handler, this has not conducted by the app yet
             }
         } else {
             console.error('Error in sendPostRequestJson:', error);
-            throw error; // 抛出其他错误，以便外部处理
+            throw error; // other unknown error
         }
     }
     
 }
 
-// 管理功能链的控制器函数
+// api for controller
 app.post('/api', async (req, res) => {
     payload = JSON.parse(req.body.root)
 
     try {
-        // 触发 number 功能
-        const response = await sendPostRequestJson('number', formatData(payload));
+        // trigger number function
+        const response = await sendPostRequestJson('number', formatData(payload)); //"number" is the first function of function chain!
         console.log(response);
 
         let result;
@@ -116,13 +116,7 @@ app.post('/api', async (req, res) => {
     }
 });
 
-// 测试端点
-app.post('/api/test', (req, res) => {
-    const payload = req.body.Payload;
-    res.json(new FunctionOutput(JSON.stringify(payload)));
-});
-
-// 在端口 5000 启动服务器
+// start service at 0.0.0.0:5000
 app.listen(5000, '0.0.0.0', () => {
     console.log('Server is running on http://0.0.0.0:5000');
 });
