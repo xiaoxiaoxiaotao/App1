@@ -1,14 +1,21 @@
-FROM python:3.10-slim
+# Use the official Node.js 18 image as the base image
+FROM node:18.20.4
 
-WORKDIR /Docker_Controller
+# Set the working directory inside the container
+WORKDIR /usr/src/app
 
-COPY requirements.txt .
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install project dependencies
+RUN npm install -g npm@10.7.0
+RUN npm install
 
+# Copy the rest of the project files to the working directory
 COPY . .
 
+# Expose port 5000
 EXPOSE 5000
 
-# 启动 Uvicorn 服务器
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]
+# Command to run the server
+CMD ["node", "app.js"]

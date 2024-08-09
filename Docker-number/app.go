@@ -53,6 +53,9 @@ func main() {
 		elapsed := time.Since(startTime)
 		elapsedTime := float64(elapsed.Nanoseconds()) / 1e9 // Convert nanoseconds to seconds
 
+		result := functions.EvenOddEvent{
+			Number: number,
+		}
 		//return the result
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -62,7 +65,7 @@ func main() {
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result":     number,
+				"result":     result,
 				"time_taken": fmt.Sprintf("%.9f", elapsedTime),
 				"start_time": fmt.Sprintf("%d", startTime.Unix()),
 			})
@@ -79,7 +82,7 @@ func main() {
 		})
 	})
 
-	if err := r.Run(":5000"); err != nil {
+	if err := r.Run("0.0.0.0:5000"); err != nil {
 		log.Fatal("Failed to run server: ", err)
 	}
 }

@@ -50,6 +50,8 @@ func main() {
 
 		// handel the event
 		message, err := functions.LambdaHandler(event)
+		fmt.Println(message)
+
 		elapsed := time.Since(startTime)
 		elapsedTime := float64(elapsed.Nanoseconds()) / 1e9 // Convert nanoseconds to seconds
 
@@ -62,7 +64,7 @@ func main() {
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result":     message,
+				"result":     event,
 				"time_taken": fmt.Sprintf("%.9f", elapsedTime),
 				"start_time": fmt.Sprintf("%d", startTime.Unix()),
 			})
@@ -79,7 +81,7 @@ func main() {
 		})
 	})
 
-	if err := r.Run(":5000"); err != nil {
+	if err := r.Run("0.0.0.0:5000"); err != nil {
 		log.Fatal("Failed to run server: ", err)
 	}
 }

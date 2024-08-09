@@ -72,7 +72,7 @@ func main() {
 		})
 	})
 
-	if err := r.Run(":5000"); err != nil {
+	if err := r.Run("0.0.0.0:5000"); err != nil {
 		log.Fatal("Failed to run server: ", err)
 	}
 }
