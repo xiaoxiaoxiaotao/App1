@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the directories, image names, container names, and ports
-dirs=("Docker-common_error_option1" "Docker-even" "Docker-number" "Docker-odd" "Controller")
+dirs=("Docker-common_error_option1" "Docker-even" "Docker-number" "Docker-odd" "Docker-Controller")
 images=("common_error_image:v1.0" "even_image:v1.0" "number_image:v1.0" "odd_image:v1.0" "controller_image:v1.0")
 containers=("container1" "container2" "container3" "container4" "controller")
 ports=(5001 5002 5003 5004 5000)
