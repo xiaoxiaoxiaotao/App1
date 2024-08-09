@@ -1,7 +1,3 @@
-Based on the provided directory structure and shell scripts, here's a `README.md` file for your project:
-
----
-
 # Docker-Based Function Chaining System
 
 This project is a Docker-based function chaining system that includes multiple containers, each running a specific service. The system is controlled by a central controller that manages the flow of data between these services.
