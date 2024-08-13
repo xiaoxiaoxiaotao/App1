@@ -36,9 +36,8 @@ function formatData(outputResult) {
     return { root: JSON.stringify(outputResult) };
 }
 
-async function sendPostRequestJson(apiName, payload) {
+async function sendPostRequestJson(apiName, payload,successResult="No result") {
     let requestLog = {};
-    let successResult = "No result";
 
     // Find API information by the name of the API
     const api = apiInfo.functions.find(a => a.name === apiName);
@@ -56,9 +55,11 @@ async function sendPostRequestJson(apiName, payload) {
 
         // Handle the response
         if (response.status === 200) {
-            successResult = response.data.result || "No result";
-            const message = `Response for ${apiName} task is ${successResult}`;
-            requestLog[`${apiName}TaskSuccess`] = message;
+            if (api.name !== "commom_error_option1"){
+                successResult = response.data.result;
+                const message = `Response for ${apiName} task is ${successResult}`;
+                requestLog[`${apiName}TaskSuccess`] = message;
+            }
 
             if (api.isLast) {
                 return { response, successResult }; // Return the response and result if this is the last function
@@ -77,7 +78,7 @@ async function sendPostRequestJson(apiName, payload) {
             if (api.isLast) {
                 return { response: error.response, successResult }; // Return the response and result if this is the last function
             } else {
-                return await nextRequest_Error(api, error.response, requestLog);
+                return await nextRequest_Error(api, error.response, requestLog, successResult);
             }
         } else {
             console.error('Error in sendPostRequestJson:', error);
@@ -97,12 +98,12 @@ async function nextRequest(api, response, successResult) {
         if (isConditionMet) {
             const apiName = nextApi.name;
             const payload = response.data.nextInput ? formatData(response.data.nextInput) : formatData(successResult);
-            return await sendPostRequestJson(apiName, payload);
+            return await sendPostRequestJson(apiName, payload, successResult);
         }
     }
 }
 
-async function nextRequest_Error(api, response,requestLog) {
+async function nextRequest_Error(api, response,requestLog, successResult) {
     const nextApis = api.next || [];
     for (const nextApi of nextApis) {
         const condition = nextApi.condition || [];
@@ -113,7 +114,7 @@ async function nextRequest_Error(api, response,requestLog) {
         if (isConditionMet) {
             const apiName = nextApi.name;
             const payload = formatData(requestLog);
-            return await sendPostRequestJson(apiName, payload);
+            return await sendPostRequestJson(apiName, payload, successResult);
         }
     }
 }
@@ -144,12 +145,13 @@ app.post('/api', async (req, res) => {
 
     try {
         // trigger the first function
-        const { response, successResult } = await sendPostRequestJson(startFunction, formatData(payload)); //"number" is the first function of function chain!
-        console.log(response);
+        const {response, successResult} = await sendPostRequestJson(startFunction, formatData(payload)); //"number" is the first function of function chain!
 
-        const result = response.data.result || "No result";
-
-        res.json(new FunctionOutput(result));
+        // Returning both the response and successResult to the client
+        res.json({
+            FailureTask: response.data.result,
+            FunctionResult: successResult,
+        });
     } catch (error) {
         console.error('Error in /api:', error);
         res.status(500).json({ error: error.message });
