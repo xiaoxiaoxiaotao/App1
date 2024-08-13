@@ -17,6 +17,7 @@ func main() {
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
+			"status": "Failure",
 			"result": "Welcome to the homepage!",
 		})
 	})
@@ -29,6 +30,7 @@ func main() {
 		if err := c.ShouldBindJSON(&req); err != nil {
 			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
+				"status":     "Failure",
 				"result":     "Invalid input format. Ensure input is a valid JSON.",
 				"time_taken": "0",
 				"start_time": fmt.Sprintf("%d", startTime.Unix()),
@@ -41,6 +43,7 @@ func main() {
 		if err := json.Unmarshal([]byte(req.Root), &event); err != nil {
 			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
+				"status":     "Failure",
 				"result":     "Some error occurred while parsing input. Ensure that input is a valid JSON in correct format. Contact admin for more details.",
 				"time_taken": "0",
 				"start_time": fmt.Sprintf("%d", startTime.Unix()),
@@ -56,12 +59,14 @@ func main() {
 		//return the result
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
+				"status":     "Failure",
 				"result":     err.Error(),
 				"time_taken": fmt.Sprintf("%.9f", elapsedTime),
 				"start_time": fmt.Sprintf("%d", startTime.Unix()),
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
+				"status":     "Success",
 				"result":     message,
 				"time_taken": fmt.Sprintf("%.9f", elapsedTime),
 				"start_time": fmt.Sprintf("%d", startTime.Unix()),

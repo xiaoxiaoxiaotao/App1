@@ -1,8 +1,9 @@
 {
-  "apis": 
-  [
+  "identifier": "fc1",
+  "functions": [
     {
       "name": "number",
+      "version": "0.1",
       "method": "POST",
       "path": "http://container3:5000/api",
       "request": {
@@ -10,11 +11,35 @@
           "Content-Type": "application/json"
         }
       },
-      "next":"odd",
-      "error_handler": "commom_error_option1"
+      "dependsOn": [],
+      "next": [
+        {
+          "name": "odd",
+          "condition": [
+            {
+              "key": "status",
+              "operator": "=",
+              "val": "Success"
+            }
+          ]
+        },
+        {
+          "name": "commom_error_option1",
+          "condition": [
+            {
+              "key": "status",
+              "operator": "=",
+              "val": "Failure"
+            }
+          ]
+        }
+      ],
+      "timeout": "10",
+      "isLast": false
     },
     {
       "name": "odd",
+      "version": "0.1",
       "method": "POST",
       "path": "http://container4:5000/api",
       "request": {
@@ -22,11 +47,41 @@
           "Content-Type": "application/json"
         }
       },
-      "next":"even",
-      "error_handler": "commom_error_option1"
+      "dependsOn": [
+        {
+          "name": "number",
+          "required": true,
+          "conditionMatchNeeded": false
+        }
+      ],
+      "next": [
+        {
+          "name": "even",
+          "condition": [
+            {
+              "key": "status",
+              "operator": "=",
+              "val": "Success"
+            }
+          ]
+        },
+        {
+          "name": "commom_error_option1",
+          "condition": [
+            {
+              "key": "status",
+              "operator": "=",
+              "val": "Failure"
+            }
+          ]
+        }
+      ],
+      "timeout": "10",
+      "isLast": false
     },
     {
       "name": "even",
+      "version": "0.1",
       "method": "POST",
       "path": "http://container2:5000/api",
       "request": {
@@ -34,11 +89,31 @@
           "Content-Type": "application/json"
         }
       },
-      "next": null,
-      "error_handler": "commom_error_option1"
+      "dependsOn": [
+        {
+          "name": "odd",
+          "required": true,
+          "conditionMatchNeeded": false
+        }
+      ],
+      "next": [
+        {
+          "name": "commom_error_option1",
+          "condition": [
+            {
+              "key": "status",
+              "operator": "=",
+              "val": "Failure"
+            }
+          ]
+        }
+      ],
+      "timeout": "10",
+      "isLast": false
     },
     {
       "name": "commom_error_option1",
+      "version": "0.1",
       "method": "POST",
       "path": "http://container1:5000/api",
       "request": {
@@ -46,9 +121,11 @@
           "Content-Type": "application/json"
         }
       },
-      "next" :null,
-      "error_handler": null
+      "dependsOn": [],
+      "next": [],
+      "timeout": "10",
+      "isLast": true
     }
-  ]
+  ],
+  "startFunction": "number"
 }
-  

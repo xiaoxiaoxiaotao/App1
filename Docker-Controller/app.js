@@ -6,9 +6,7 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
-let requestLog = {};
-
-// read api_info.json to extract the iinformation of APIs
+// read api_info.json to extract the information of APIs
 let apiInfo = {};
 try {
     const data = fs.readFileSync('api_info.json', 'utf8');
@@ -16,6 +14,8 @@ try {
 } catch (err) {
     console.error('Error reading api_info.json:', err);
 }
+
+let startFunction = apiInfo.startFunction;
 
 // define input from user
 class UserInput {
@@ -31,83 +31,123 @@ class FunctionOutput {
     }
 }
 
-// formatt the JSON to the input format of functions
+// format the JSON to the input format of functions
 function formatData(outputResult) {
     return { root: JSON.stringify(outputResult) };
 }
 
-// send a request to function chain (conduct recursively)
 async function sendPostRequestJson(apiName, payload) {
-    let url = null;
-    let headers = {};
+    let requestLog = {};
+    let successResult = "No result";
 
-    // find API inforation through the name of api
-    for (const api of apiInfo.apis) {
-        if (api.name === apiName) {
-            url = api.path;
-            headers = api.request.headers;
-            break;
-        }
-    }
-
-    // check URL
-    if (url === null) {
+    // Find API information by the name of the API
+    const api = apiInfo.functions.find(a => a.name === apiName);
+    if (!api) {
         throw new Error(`API named '${apiName}' not found.`);
     }
 
+    const url = api.path;
+    const headers = api.request.headers || {};
+    const timeout = api.timeout ? parseInt(api.timeout) * 1000 : 10000; // Convert timeout to milliseconds, default to 10s
+
     try {
-        // send post request
-        const response = await axios.post(url, payload, { headers });
-    
-        // get response
+        // Send POST request with timeout
+        const response = await axios.post(url, payload, { headers, timeout });
+
+        // Handle the response
         if (response.status === 200) {
-            const successResult = response.data.result || "No result";
+            successResult = response.data.result || "No result";
             const message = `Response for ${apiName} task is ${successResult}`;
             requestLog[`${apiName}TaskSuccess`] = message;
-    
-            const nextApi = apiInfo.apis.find(a => a.name === apiName).next;
-            if (nextApi) {
-                apiName = nextApi;
-                payload = formatData(successResult);
-                return await sendPostRequestJson(apiName, payload);
+
+            if (api.isLast) {
+                return { response, successResult }; // Return the response and result if this is the last function
             } else {
-                return response; // if there is not next api, this is the last function of chain, so just return this to user
+                return await nextRequest(api, response, successResult);
             }
-        } else {
-            return response; // this has not conducted by the app yet
         }
+
+        // Return the response and result even if the status is not 200
+        return { response, successResult };
     } catch (error) {
         if (error.response && error.response.status === 400) {
-            const errorResult = error.response.data.result || "No result";
+            const errorResult = error.response.data.result || "No error log";
             requestLog[`${apiName}TaskFailure`] = errorResult;
-    
-            const errorHandler = apiInfo.apis.find(a => a.name === apiName).error_handler;
-            if (errorHandler) {
-                apiName = errorHandler;
-                payload = formatData(requestLog);
-                return await sendPostRequestJson(apiName, payload);
+
+            if (api.isLast) {
+                return { response: error.response, successResult }; // Return the response and result if this is the last function
             } else {
-                return error.response; // no error handler, this has not conducted by the app yet
+                return await nextRequest_Error(api, error.response, requestLog);
             }
         } else {
             console.error('Error in sendPostRequestJson:', error);
-            throw error; // other unknown error
+            throw error; // Re-throw other unknown errors
         }
     }
-    
+}
+
+async function nextRequest(api, response, successResult) {
+    const nextApis = api.next || [];
+    for (const nextApi of nextApis) {
+        const condition = nextApi.condition || [];
+        const isConditionMet = condition.every(c => {
+            return evaluateCondition(c, response.data);
+        });
+
+        if (isConditionMet) {
+            const apiName = nextApi.name;
+            const payload = response.data.nextInput ? formatData(response.data.nextInput) : formatData(successResult);
+            return await sendPostRequestJson(apiName, payload);
+        }
+    }
+}
+
+async function nextRequest_Error(api, response,requestLog) {
+    const nextApis = api.next || [];
+    for (const nextApi of nextApis) {
+        const condition = nextApi.condition || [];
+        const isConditionMet = condition.every(c => {
+            return evaluateCondition(c, response.data);
+        });
+
+        if (isConditionMet) {
+            const apiName = nextApi.name;
+            const payload = formatData(requestLog);
+            return await sendPostRequestJson(apiName, payload);
+        }
+    }
+}
+
+// Helper function to evaluate condition
+function evaluateCondition(condition, responseData) {
+    const { key, operator, val } = condition;
+    const actualVal = responseData[key];
+
+    switch (operator) {
+        case "=":
+            return actualVal === val;
+        case "!=":
+            return actualVal !== val;
+        case ">":
+            return actualVal > val;
+        case "<":
+            return actualVal < val;
+        // Add more operators as needed
+        default:
+            return false;
+    }
 }
 
 // api for controller
 app.post('/api', async (req, res) => {
-    payload = JSON.parse(req.body.root)
+    const payload = JSON.parse(req.body.root);
 
     try {
-        // trigger number function
-        const response = await sendPostRequestJson('number', formatData(payload)); //"number" is the first function of function chain!
+        // trigger the first function
+        const { response, successResult } = await sendPostRequestJson(startFunction, formatData(payload)); //"number" is the first function of function chain!
         console.log(response);
 
-        let result;
-        result = response.data.result || "No result"
+        const result = response.data.result || "No result";
 
         res.json(new FunctionOutput(result));
     } catch (error) {

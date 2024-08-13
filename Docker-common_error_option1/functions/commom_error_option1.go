@@ -6,6 +6,7 @@ import (
 )
 
 func LambdaHandler(event map[string]string) string {
+	fmt.Println(event)
 	re := regexp.MustCompile(`Failure$`)
 	var failedTask string
 

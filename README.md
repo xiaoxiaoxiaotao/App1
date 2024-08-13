@@ -7,7 +7,7 @@ This project is a Docker-based function chaining system that includes multiple c
 ```
 App1/
 │
-├── Controller/
+├── Docker-Controller/
 │   ├── node_modules/           # Node.js dependencies (not included in version control)
 │   ├── api_info.json           # API configuration file
 │   ├── app.js                  # Main application logic for the controller
