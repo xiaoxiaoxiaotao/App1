@@ -118,7 +118,7 @@ curl -X POST http://localhost:5000/api -H 'Content-Type: application/json' -d '{
 
 You can expect the following results:
 ```bash
-{"result":"oddTask"}
+{"FailureTask":"oddTask","FunctionResult":{"number":2123214}}
 ```
 
 Here is another example:
@@ -129,7 +129,7 @@ curl -X POST http://localhost:5000/api -H 'Content-Type: application/json' -d '{
 
 You can expect the following results:
 ```bash
-{"result":"evenTask"}
+{"FailureTask":"evenTask","FunctionResult":"woohoo odd number"}
 ```
 
 This request will:
